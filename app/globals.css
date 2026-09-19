@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  @apply bg-slate-100 font-sans text-slate-900 antialiased dark:bg-ink-950 dark:text-slate-100;
+}
+
+@layer components {
+  /* Surfaces */
+  .card {
+    @apply rounded-xl border border-slate-200 bg-white shadow-card dark:border-ink-700 dark:bg-ink-850;
+  }
+  .card-header {
+    @apply flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-ink-700;
+  }
+  /* Form controls */
+  .field {
+    @apply block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 disabled:bg-slate-50 disabled:text-slate-500 dark:border-ink-700 dark:bg-ink-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:disabled:bg-ink-850 dark:disabled:text-slate-500;
+  }
+  /* Tables */
+  .th {
+    @apply whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+  }
+  .td {
+    @apply whitespace-nowrap px-3 py-2 text-slate-700 dark:text-slate-300;
+  }
+  .thead {
+    @apply bg-slate-50 dark:bg-ink-800/70;
+  }
+  .row-hover {
+    @apply hover:bg-brand-50/60 dark:hover:bg-ink-800/60;
+  }
+  .divide-y-ui {
+    @apply divide-y divide-slate-100 dark:divide-ink-700;
+  }
+  /* Text roles */
+  .t-primary {
+    @apply text-slate-900 dark:text-white;
+  }
+  .t-secondary {
+    @apply text-slate-600 dark:text-slate-300;
+  }
+  .t-muted {
+    @apply text-slate-500 dark:text-slate-400;
+  }
+  .t-faint {
+    @apply text-slate-400 dark:text-slate-500;
+  }
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* thin scrollbars in the sidebar */
+.scroll-thin::-webkit-scrollbar {
+  width: 6px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-slate-300 dark:bg-ink-700;
+}
