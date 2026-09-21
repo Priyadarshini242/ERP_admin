@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Bell, ChevronDown, LogOut, Menu, Moon, Search, Settings, Sun, UserCircle2 } from "lucide-react";
+import { Bell, CheckCircle2, ChevronDown, LogOut, Menu, Moon, Search, Settings, Sun, UserCircle2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -114,6 +114,10 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
                   <DropdownLink href="/approvals" onClick={() => setMenu(null)}>
                     <span className="flex-1">Awaiting your approval</span>
                     <span className="rounded-full bg-amber-100 px-2 text-[11px] font-medium text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">{approvals.actionable}</span>
+                  </DropdownLink>
+                  <DropdownLink href="/approvals?status=APPROVED" onClick={() => setMenu(null)}>
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                    <span className="flex-1">Approved documents</span>
                   </DropdownLink>
                   {approvals.rejected > 0 && (
                     <DropdownLink href="/approvals?status=REJECTED" onClick={() => setMenu(null)}>

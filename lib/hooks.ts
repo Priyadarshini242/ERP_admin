@@ -70,10 +70,15 @@ export function useFetch<T>(path: string | null, query: Query = {}, deps: unknow
       setData(await api<T>(path, { query }));
       setDemo(false);
     } catch (e) {
-      if (isOffline(e) && fallback !== undefined) {
-        setData(fallback);
-        setDemo(true);
-      } else setError(e instanceof Error ? e.message : "Failed to load");
+      if (isOffline(e)) {
+        const demoFallback = fallback !== undefined ? fallback : (demoFor(path) as T | null);
+        if (demoFallback !== null && demoFallback !== undefined) {
+          setData(demoFallback);
+          setDemo(true);
+          return;
+        }
+      }
+      setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
       setLoading(false);
     }

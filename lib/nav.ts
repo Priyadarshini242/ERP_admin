@@ -84,9 +84,9 @@ export const MODULES: NavModule[] = [
         label: "Approvals",
         icon: ClipboardCheck,
         children: [
-          { label: "Approval Inbox", href: "/approvals", icon: ClipboardCheck },
-          { label: "Pending Verification", href: "/approvals?status=PENDING", icon: ClipboardList },
-          { label: "Rejected Documents", href: "/approvals?status=REJECTED", icon: FileMinus },
+            { label: "Approval Documents", href: "/approvals?status=APPROVED", icon: ClipboardCheck },
+            { label: "Pending Documents", href: "/approvals?status=PENDING", icon: ClipboardList },
+            { label: "Rejection Documents", href: "/approvals?status=REJECTED", icon: FileMinus },
         ],
       },
       {

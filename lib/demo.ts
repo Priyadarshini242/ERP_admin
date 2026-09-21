@@ -127,6 +127,38 @@ export function demoFor(path: string): Record<string, unknown> | null {
         ["5100", "Purchases", "EXPENSE", "742754.00", "DR"], ["5200", "Purchase Returns", "EXPENSE", "16568.00", "CR"], ["5300", "Inventory Adjustment", "EXPENSE", "2140.00", "DR"], ["5900", "Round Off", "EXPENSE", "12.00", "DR"],
       ].map(([code, name, group, balance, type], i) => ({ id: i + 1, code, name, group, parent: null, parentId: null, openingBalance: "0.00", openingType: "DR", isSystem: true, isActive: true, balance, balanceType: type })),
     );
+  if (p === "/approvals/summary") return { pending: 4, actionable: 3, rejected: 1, approvedAwaitingPost: 1, byLevel: { "1": 2, "2": 1, "3": 1 } };
+  if (p === "/approvals/queue")
+    return page([
+      { docType: "SALES_INVOICE", docId: 1, docLabel: "Sales invoice", docNo: "INV-00001", date: iso(0), party: "ABC Traders", grandTotal: "25430.00", approvalStatus: "PENDING", level: 1, createdBy: by, submittedAt: iso(1), listHref: "/sales/register", can: { approve: true, reject: true } },
+      { docType: "PURCHASE_INVOICE", docId: 2, docLabel: "Purchase invoice", docNo: "BILL-00002", date: iso(1), party: "National Supplies", grandTotal: "32450.00", approvalStatus: "PENDING", level: 2, createdBy: by, submittedAt: iso(2), listHref: "/purchase/register", can: { approve: true, reject: true } },
+      { docType: "STOCK_ADJUSTMENT", docId: 3, docLabel: "Stock adjustment", docNo: "ADJ-00003", date: iso(2), party: null, grandTotal: null, approvalStatus: "PENDING", level: 1, createdBy: by, submittedAt: iso(3), listHref: "/inventory/stock/adjustment", can: { approve: true, reject: true } },
+      { docType: "SALES_ORDER", docId: 4, docLabel: "Sales order", docNo: "SO-00004", date: iso(3), party: "Metro Wholesale", grandTotal: "42180.00", approvalStatus: "REJECTED", level: 1, createdBy: by, submittedAt: iso(4), listHref: "/sales/orders", can: { approve: false, reject: false } },
+      { docType: "PURCHASE_INVOICE", docId: 5, docLabel: "Purchase invoice", docNo: "BILL-00005", date: iso(4), party: "Sri Distributors", grandTotal: "55200.00", approvalStatus: "APPROVED", level: 0, createdBy: by, submittedAt: iso(5), listHref: "/purchase/register", can: { approve: false, reject: false } },
+    ]);
+  if (p === "/manufacturing/summary")
+    return { openOrders: 4, inProgress: 2, completedThisMonth: 18, qcPending: 3, quarantinedBatches: 1, wipValue: "184500.00", demo: true };
+  if (p === "/manufacturing/orders")
+    return page([
+      { id: 1, orderNo: "WO-00021", product: productsList[5], fgBatchNo: "FG-260921-01", plannedQty: "500", producedQty: "320", unit: "BAG", issuedCost: "162000.00", absorbedCost: "103680.00", status: "IN_PROGRESS", approvalStatus: "APPROVED" },
+      { id: 2, orderNo: "WO-00022", product: productsList[7], fgBatchNo: "FG-260920-02", plannedQty: "300", producedQty: "0", unit: "PCS", issuedCost: "72000.00", absorbedCost: "0.00", status: "RELEASED", approvalStatus: "APPROVED" },
+      { id: 3, orderNo: "WO-00020", product: productsList[6], fgBatchNo: "FG-260918-03", plannedQty: "1200", producedQty: "1200", unit: "STRIP", issuedCost: "11400.00", absorbedCost: "11400.00", status: "COMPLETED", approvalStatus: "APPROVED" },
+      { id: 4, orderNo: "WO-00023", product: productsList[3], fgBatchNo: "FG-260921-04", plannedQty: "800", producedQty: "0", unit: "PCS", issuedCost: "49600.00", absorbedCost: "0.00", status: "DRAFT", approvalStatus: "PENDING" },
+    ]);
+  if (p === "/manufacturing/qc")
+    return page([
+      { id: 1, inspectionNo: "QC-00018", batch: { batchNo: "FG-260921-01" }, type: "FINISHED", inspectionDate: iso(0), status: "DRAFT" },
+      { id: 2, inspectionNo: "QC-00017", batch: { batchNo: "RM-260920-07" }, type: "INCOMING", inspectionDate: iso(1), status: "DRAFT" },
+      { id: 3, inspectionNo: "QC-00016", batch: { batchNo: "FG-260918-03" }, type: "RETEST", inspectionDate: iso(2), status: "DRAFT" },
+    ]);
+  if (p.startsWith("/register/reports/")) {
+    const report = p.slice("/register/reports/".length);
+    if (report === "trial-balance") return { rows: [{ code: "1100", name: "Cash", group: "ASSET", debit: "184200.00", credit: "0.00" }, { code: "4100", name: "Sales", group: "INCOME", debit: "0.00", credit: "1054602.00" }], totals: { debit: "184200.00", credit: "1054602.00", difference: "870402.00" } };
+    if (report === "outstanding") return { type: "receivable", total: "432830.00", ageing: { "0-30": "214300.00", "31-60": "122130.00", "61-90": "0.00", "90+": "96400.00" }, parties: [{ name: "ABC Traders", invoices: 3, oldestDue: iso(42), overdue: "96400.00", outstanding: "182430.00" }, { name: "Metro Wholesale", invoices: 2, oldestDue: iso(18), overdue: "0.00", outstanding: "74600.00" }] };
+    if (report === "day-book") return { vouchers: [{ voucherType: "SALES", voucherNo: "INV-00001", entryDate: iso(0), debit: "25430.00", narration: "Retail sale", lines: [{ id: 1, ledger: { code: "1200", name: "Accounts Receivable" }, debit: "25430.00", credit: "0.00" }, { id: 2, ledger: { code: "4100", name: "Sales" }, debit: "0.00", credit: "25430.00" }] }], totals: { debit: "25430.00", credit: "25430.00" } };
+    if (report === "gst-summary") return { rows: [{ rate: "18", taxable: "1054602.00", cgst: "94749.00", sgst: "94749.00", igst: "0.00", tax: "189498.00" }, { rate: "5", taxable: "128400.00", cgst: "3210.00", sgst: "3210.00", igst: "0.00", tax: "6420.00" }], totals: { taxable: "1183002.00", tax: "195918.00" } };
+    return { months: [{ month: "Sep 2026", count: 148, taxable: "1054602.00", tax: "190628.00", b2b: "842300.00", b2c: "402930.00", total: "1245230.00" }], count: 148, total: "1245230.00" };
+  }
   return null;
 }
 

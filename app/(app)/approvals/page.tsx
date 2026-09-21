@@ -9,7 +9,7 @@ import { DataTable, FilterBar, type Column } from "@/components/DataTable";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Alert, Button, Checkbox, Field, Input, Modal, PageHeader, Pill, Select, Textarea } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
-import { DOC_TYPES, LEVELS, notifyApprovalsChanged, type ApprovalDocType, type QueueRow } from "@/lib/approvals";
+import { DOC_TYPES, isPending, LEVELS, notifyApprovalsChanged, type ApprovalDocType, type QueueRow } from "@/lib/approvals";
 import { demoFor } from "@/lib/demo";
 import { fmtDate, money } from "@/lib/format";
 import { useList } from "@/lib/hooks";
@@ -34,7 +34,8 @@ function relative(iso: string | null) {
 function ApprovalsInner() {
   const params = useSearchParams();
   const router = useRouter();
-  const [tab, setTab] = useState<"PENDING" | "REJECTED" | "APPROVED">((params.get("status") as "PENDING" | "REJECTED") ?? "PENDING");
+  const initialStatus = params.get("status");
+  const [tab, setTab] = useState<"PENDING" | "REJECTED" | "APPROVED">(initialStatus === "REJECTED" || initialStatus === "APPROVED" ? initialStatus : "PENDING");
   const [docType, setDocType] = useState(params.get("docType") ?? "");
   const [level, setLevel] = useState(params.get("level") ?? "");
   const [mine, setMine] = useState(false);
@@ -47,7 +48,7 @@ function ApprovalsInner() {
   const [error, setError] = useState<ApiError | null>(null);
 
   const { data, items, loading, error: loadError, reload, demo } = useList<QueueRow>("/approvals/queue", {
-    status: tab === "APPROVED" ? undefined : tab,
+    status: tab,
     docType: docType || undefined,
     level: level || undefined,
     mine: mine || undefined,
@@ -55,6 +56,12 @@ function ApprovalsInner() {
     page,
     pageSize: 25,
   });
+
+  useEffect(() => {
+    const status = params.get("status");
+    setTab(status === "REJECTED" || status === "APPROVED" ? status : "PENDING");
+    setPage(1);
+  }, [params]);
 
   const loadSummary = () =>
     api<Summary>("/approvals/summary")
@@ -83,7 +90,7 @@ function ApprovalsInner() {
     }
   }
 
-  const rows = tab === "APPROVED" ? items.filter((r) => r.approvalStatus === "APPROVED") : items;
+  const rows = items.filter((r) => tab === "PENDING" ? (r.approvalStatus as string) === "PENDING" || isPending(r.approvalStatus) : r.approvalStatus === tab);
 
   const columns: Column<QueueRow>[] = [
     { key: "docLabel", header: "Type", render: (r) => <Pill tone="info">{r.docLabel}</Pill> },
@@ -130,9 +137,9 @@ function ApprovalsInner() {
       )}
 
       <div className="mb-4 flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-sm dark:border-ink-700 dark:bg-ink-850">
-        {(["PENDING", "REJECTED"] as const).map((t) => (
+        {(["PENDING", "APPROVED", "REJECTED"] as const).map((t) => (
           <button key={t} onClick={() => { setTab(t); setPage(1); }} className={clsx("rounded-md px-3 py-1.5 text-sm transition", tab === t ? "bg-brand-600 text-white" : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-ink-800")}>
-            {t === "PENDING" ? "Pending" : "Rejected"}
+            {t === "PENDING" ? "Pending" : t === "APPROVED" ? "Approved" : "Rejected"}
           </button>
         ))}
       </div>
@@ -171,7 +178,7 @@ function ApprovalsInner() {
         error={loadError}
         rowKey={(r) => `${r.docType}-${r.docId}`}
         onRowClick={(r) => router.push(`${r.listHref}${r.listHref.includes("?") ? "&" : "?"}open=${r.docId}`)}
-        empty={tab === "REJECTED" ? "No rejected documents" : "Nothing waiting at this level"}
+        empty={tab === "REJECTED" ? "No rejected documents" : tab === "APPROVED" ? "No approved documents" : "Nothing waiting at this level"}
         pagination={data ? { page: data.page, pages: data.pages, total: data.total, pageSize: data.pageSize, onPage: setPage } : undefined}
       />
 

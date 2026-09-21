@@ -93,27 +93,29 @@ function Report({ tab, data }: { tab: Tab; data: any }) {
             { key: "debit", header: "Debit", align: "right", render: (r: any) => (n(r.debit) ? money(r.debit) : "") },
             { key: "credit", header: "Credit", align: "right", render: (r: any) => (n(r.credit) ? money(r.credit) : "") },
           ]}
-          rows={data.rows}
+          rows={data.rows ?? []}
           empty="No balances yet"
           footer={
             <tr>
-              <td colSpan={3} className="px-3 py-2 text-right">Totals {n(data.totals.difference) !== 0 && <span className="ml-2 text-red-600 dark:text-red-400">(difference {money(data.totals.difference)})</span>}</td>
-              <td className="px-3 py-2 text-right">{money(data.totals.debit)}</td>
-              <td className="px-3 py-2 text-right">{money(data.totals.credit)}</td>
+              <td colSpan={3} className="px-3 py-2 text-right">Totals {n(data.totals?.difference) !== 0 && <span className="ml-2 text-red-600 dark:text-red-400">(difference {money(data.totals?.difference ?? 0)})</span>}</td>
+              <td className="px-3 py-2 text-right">{money(data.totals?.debit ?? 0)}</td>
+              <td className="px-3 py-2 text-right">{money(data.totals?.credit ?? 0)}</td>
             </tr>
           }
         />
       );
 
-    case "day-book":
+    case "day-book": {
+      const vouchers = Array.isArray(data.vouchers) ? data.vouchers : [];
+      const totals = data.totals ?? {};
       return (
         <div className="space-y-3">
-          {data.vouchers.length === 0 && <p className="rounded-lg border border-slate-200 dark:border-ink-700 bg-white dark:bg-ink-850 p-8 text-center text-sm text-slate-400 dark:text-slate-500">No vouchers in this period</p>}
-          {data.vouchers.map((v: any) => (
+          {vouchers.length === 0 && <p className="rounded-lg border border-slate-200 dark:border-ink-700 bg-white dark:bg-ink-850 p-8 text-center text-sm text-slate-400 dark:text-slate-500">No vouchers in this period</p>}
+          {vouchers.map((v: any) => (
             <Card key={`${v.voucherType}-${v.voucherNo}`} title={<span>{fmtDate(v.entryDate)} · {titleCase(v.voucherType)} <span className="font-mono">{v.voucherNo}</span></span>} actions={<span className="text-xs text-slate-500 dark:text-slate-400">{money(v.debit)}</span>} padded={false}>
               <table className="min-w-full text-sm">
                 <tbody className="divide-y divide-slate-100 dark:divide-ink-700">
-                  {v.lines.map((l: any) => (
+                  {(v.lines ?? []).map((l: any) => (
                     <tr key={l.id}>
                       <td className="px-4 py-1.5"><span className="font-mono text-xs text-slate-400 dark:text-slate-500">{l.ledger.code}</span> {l.ledger.name}</td>
                       <td className="px-4 py-1.5 text-right tabular-nums">{n(l.debit) ? money(l.debit) : ""}</td>
@@ -125,16 +127,17 @@ function Report({ tab, data }: { tab: Tab; data: any }) {
               {v.narration && <p className="px-4 py-2 text-xs text-slate-500 dark:text-slate-400">{v.narration}</p>}
             </Card>
           ))}
-          <p className="text-right text-sm text-slate-600 dark:text-slate-300">Period totals — Dr {money(data.totals.debit)} · Cr {money(data.totals.credit)}</p>
+          <p className="text-right text-sm text-slate-600 dark:text-slate-300">Period totals — Dr {money(totals.debit ?? 0)} · Cr {money(totals.credit ?? 0)}</p>
         </div>
       );
+    }
 
     case "outstanding":
       return (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
             <Tile label={`Total ${data.type}`} value={money(data.total)} />
-            {Object.entries(data.ageing as Record<string, string>).map(([b, v]) => (
+            {Object.entries((data.ageing ?? {}) as Record<string, string>).map(([b, v]) => (
               <Tile key={b} label={`${b} days`} value={money(v)} tone={b === "90+" && n(v) > 0 ? "warn" : undefined} />
             ))}
           </div>
@@ -146,7 +149,7 @@ function Report({ tab, data }: { tab: Tab; data: any }) {
               { key: "overdue", header: "Overdue", align: "right", render: (r: any) => <span className={n(r.overdue) > 0 ? "text-red-700 dark:text-red-400" : ""}>{money(r.overdue)}</span> },
               { key: "outstanding", header: "Outstanding", align: "right", render: (r: any) => <span className="font-medium">{money(r.outstanding)}</span> },
             ]}
-            rows={data.parties}
+            rows={data.parties ?? []}
             empty="Nothing outstanding"
           />
         </div>
@@ -169,26 +172,29 @@ function Report({ tab, data }: { tab: Tab; data: any }) {
               : []),
             { key: "total", header: "Total", align: "right", render: (r: any) => <span className="font-medium">{money(r.total)}</span> },
           ]}
-          rows={data.months}
+          rows={data.months ?? []}
           empty="No posted documents in this period"
           footer={
             <tr>
-              <td colSpan={tab === "sales-summary" ? 6 : 4} className="px-3 py-2 text-right">{data.count} documents</td>
-              <td className="px-3 py-2 text-right">{money(data.total)}</td>
+              <td colSpan={tab === "sales-summary" ? 6 : 4} className="px-3 py-2 text-right">{data.count ?? 0} documents</td>
+              <td className="px-3 py-2 text-right">{money(data.total ?? 0)}</td>
             </tr>
           }
         />
       );
 
     case "gst-summary": {
+      const output = data.output ?? {};
+      const input = data.input ?? {};
+      const payable = data.payable ?? {};
       const row = (label: string, x: any, strong = false) => (
         <tr key={label} className={strong ? "font-semibold" : ""}>
           <td className="px-3 py-1.5">{label}</td>
-          <td className="px-3 py-1.5 text-right tabular-nums">{money(x.taxable)}</td>
-          <td className="px-3 py-1.5 text-right tabular-nums">{money(x.cgst)}</td>
-          <td className="px-3 py-1.5 text-right tabular-nums">{money(x.sgst)}</td>
-          <td className="px-3 py-1.5 text-right tabular-nums">{money(x.igst)}</td>
-          <td className="px-3 py-1.5 text-right tabular-nums">{money(x.tax)}</td>
+          <td className="px-3 py-1.5 text-right tabular-nums">{money(x?.taxable ?? 0)}</td>
+          <td className="px-3 py-1.5 text-right tabular-nums">{money(x?.cgst ?? 0)}</td>
+          <td className="px-3 py-1.5 text-right tabular-nums">{money(x?.sgst ?? 0)}</td>
+          <td className="px-3 py-1.5 text-right tabular-nums">{money(x?.igst ?? 0)}</td>
+          <td className="px-3 py-1.5 text-right tabular-nums">{money(x?.tax ?? 0)}</td>
         </tr>
       );
       const head = (
@@ -206,16 +212,16 @@ function Report({ tab, data }: { tab: Tab; data: any }) {
       return (
         <div className="space-y-4">
           <Card title="Output tax (sales side)" padded={false}>
-            <table className="min-w-full text-sm">{head}<tbody className="divide-y divide-slate-100 dark:divide-ink-700">{row("Sales invoices", data.output.sales)}{row("less Credit notes", data.output.creditNotes)}{row("less Sales returns", data.output.salesReturns)}{row("Net output", data.output.net, true)}</tbody></table>
+            <table className="min-w-full text-sm">{head}<tbody className="divide-y divide-slate-100 dark:divide-ink-700">{row("Sales invoices", output.sales)}{row("less Credit notes", output.creditNotes)}{row("less Sales returns", output.salesReturns)}{row("Net output", output.net, true)}</tbody></table>
           </Card>
           <Card title="Input tax credit (purchase side)" padded={false}>
-            <table className="min-w-full text-sm">{head}<tbody className="divide-y divide-slate-100 dark:divide-ink-700">{row("Purchase bills", data.input.purchases)}{row("less Debit notes", data.input.debitNotes)}{row("less Purchase returns", data.input.purchaseReturns)}{row("Net input", data.input.net, true)}</tbody></table>
+            <table className="min-w-full text-sm">{head}<tbody className="divide-y divide-slate-100 dark:divide-ink-700">{row("Purchase bills", input.purchases)}{row("less Debit notes", input.debitNotes)}{row("less Purchase returns", input.purchaseReturns)}{row("Net input", input.net, true)}</tbody></table>
           </Card>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <Tile label="CGST payable" value={money(data.payable.cgst)} />
-            <Tile label="SGST payable" value={money(data.payable.sgst)} />
-            <Tile label="IGST payable" value={money(data.payable.igst)} />
-            <Tile label="Net GST payable" value={money(data.payable.total)} tone={n(data.payable.total) < 0 ? "good" : undefined} />
+            <Tile label="CGST payable" value={money(payable.cgst ?? 0)} />
+            <Tile label="SGST payable" value={money(payable.sgst ?? 0)} />
+            <Tile label="IGST payable" value={money(payable.igst ?? 0)} />
+            <Tile label="Net GST payable" value={money(payable.total ?? 0)} tone={n(payable.total) < 0 ? "good" : undefined} />
           </div>
           <p className="text-xs text-slate-400 dark:text-slate-500">Negative net = input credit carried forward. <StatusBadge value="B2B" /> invoices need customer GSTIN for GSTR-1 reporting.</p>
         </div>

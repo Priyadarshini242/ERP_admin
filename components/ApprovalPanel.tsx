@@ -225,7 +225,7 @@ export function ApprovalPanel({ docType, docId, docStatus, onChange, compact }: 
 
 /** Offline demo only: apply a transition locally. */
 function simulate(s: ApprovalState, verb: string, body: Record<string, unknown>): ApprovalState {
-  const me = { id: 0, fullName: "T. Sivasundaram", role: "ADMIN" };
+  const me = { id: 0, fullName: "Nivetha", role: "ADMIN" };
   const now = new Date().toISOString();
   const rounds = s.history.length ? Math.max(...s.history.map((h) => h.round)) : 0;
   const push = (rows: ApprovalState["history"], row: Partial<ApprovalState["history"][number]>) => [...rows, { id: rows.length + 1, round: rounds || 1, level: 0, action: "SUBMIT", fromStatus: s.approvalStatus, toStatus: s.approvalStatus, comment: null, createdAt: now, actedBy: me, ...row } as ApprovalState["history"][number]];
