@@ -6,6 +6,11 @@ import { AUTH_ENABLED, clearToken, getToken } from "./auth";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 
+// Keep the UI responsive when running the frontend without the optional API.
+// Deployments with a remote API can override this in .env.local.
+const configuredTimeout = Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS ?? "1500");
+const API_TIMEOUT_MS = Number.isFinite(configuredTimeout) && configuredTimeout > 0 ? configuredTimeout : 1500;
+
 export interface Issue {
   field?: string;
   message: string;
@@ -47,15 +52,23 @@ export function buildQuery(query?: Query): string {
 
 export async function api<T = unknown>(path: string, opts: Options = {}): Promise<T> {
   const token = getToken();
-  const res = await fetch(`${API_URL}${path}${buildQuery(opts.query)}`, {
-    method: opts.method ?? "GET",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
-    cache: "no-store",
-  });
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}${buildQuery(opts.query)}`, {
+      method: opts.method ?? "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
+      cache: "no-store",
+      signal: controller.signal,
+    });
+  } finally {
+    window.clearTimeout(timeout);
+  }
 
   const text = await res.text();
   const data = text ? safeJson(text) : null;

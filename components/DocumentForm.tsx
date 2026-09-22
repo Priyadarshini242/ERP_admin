@@ -122,6 +122,8 @@ export interface DocumentFormProps {
   validateExtra?: (s: DocState, ctx: { party: PartyLite | null; products: ProductLite[] }) => Issue[];
   /** preset header fields, e.g. { customerType: "B2B" } */
   initial?: Partial<DocState>;
+  /** keeps Customer Type aligned with an invoice-level B2B/B2C selection */
+  customerTypePreset?: "B2B" | "B2C";
   /** three-level approval document type: enables "Save & submit for approval" and the ?open= redirect */
   docType?: ApprovalDocType;
   /** batch handling on lines: receive (bills, sales returns) | issue (invoices, purchase returns) | none */
@@ -216,6 +218,36 @@ export function DocumentForm(p: DocumentFormProps) {
   const [busy, setBusy] = useState<"draft" | "action" | null>(null);
   const [batchOptions, setBatchOptions] = useState<Record<string, BatchOption[]>>({});
 
+  // Dashboard recommendations can open a document with product IDs already
+  // selected. Complete those preset rows when master data becomes available.
+  useEffect(() => {
+    if (!products.length) return;
+    setS((current) => {
+      let changed = false;
+      const items = current.items.map((line) => {
+        const product = products.find((item) => item.id === line.productId);
+        if (!product) return line;
+        const patch: Partial<LineState> = {};
+        if (!line.unitPrice) patch.unitPrice = String(n(product[priceField]));
+        if (!line.taxRate) patch.taxRate = String(n(product.taxRate));
+        if (!line.description) patch.description = product.name;
+        if (!line.mrp && n(product.mrp) > 0) patch.mrp = String(n(product.mrp));
+        if (Object.keys(patch).length) {
+          changed = true;
+          return { ...line, ...patch };
+        }
+        return line;
+      });
+      return changed ? { ...current, items } : current;
+    });
+  }, [products, priceField]);
+
+  useEffect(() => {
+    const preset = p.customerTypePreset;
+    if (!preset) return;
+    setS((current) => current.customerType === preset ? current : { ...current, customerType: preset });
+  }, [p.customerTypePreset]);
+
   const party = useMemo(() => parties.find((x) => x.id === s.partyId) ?? null, [parties, s.partyId]);
   const interstate = Boolean(party?.stateCode && party.stateCode !== COMPANY_STATE);
   const clientTotals = useMemo(() => computeTotals(s.items, interstate), [s.items, interstate]);
@@ -231,7 +263,7 @@ export function DocumentForm(p: DocumentFormProps) {
   // when the party changes: customer type from master + load their posted invoices
   useEffect(() => {
     if (!party) return;
-    if (p.showCustomerType && party.customerType) setS((x) => ({ ...x, customerType: party.customerType! }));
+    if (p.showCustomerType && party.customerType && !p.customerTypePreset) setS((x) => ({ ...x, customerType: party.customerType! }));
     if (p.sourceInvoice) {
       const path = p.sourceInvoice === "sales" ? "/sales/invoices" : "/purchase/invoices";
       const key = p.sourceInvoice === "sales" ? "customerId" : "vendorId";
@@ -425,7 +457,7 @@ export function DocumentForm(p: DocumentFormProps) {
 
           {p.showCustomerType && (
             <Field label="Customer type" error={fieldErr("customerType")}>
-              <Select value={s.customerType} onChange={(e) => upd({ customerType: e.target.value as "B2B" | "B2C" })}>
+              <Select value={s.customerType} onChange={(e) => upd({ customerType: e.target.value as "B2B" | "B2C" })} disabled={Boolean(p.customerTypePreset)}>
                 <option value="B2B">B2B (GST registered)</option>
                 <option value="B2C">B2C</option>
               </Select>

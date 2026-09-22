@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 import { DataTable, FilterBar } from "@/components/DataTable";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -29,12 +29,19 @@ function monthStart() {
 
 function ReportsPageInner() {
   const params = useSearchParams();
-  const initialTab = TABS.some((t) => t.key === params.get("tab")) ? (params.get("tab") as Tab) : "trial-balance";
-  const [tab, setTab] = useState<Tab>(initialTab);
+  const requestedTab = TABS.some((t) => t.key === params.get("tab")) ? (params.get("tab") as Tab) : "trial-balance";
+  const [tab, setTab] = useState<Tab>(requestedTab);
   const [from, setFrom] = useState(monthStart());
   const [to, setTo] = useState(isoDate());
   const [asOf, setAsOf] = useState(isoDate());
   const [type, setType] = useState<"receivable" | "payable">(params.get("type") === "payable" ? "payable" : "receivable");
+
+  // A sidebar link changes the query string without unmounting this page.
+  // Sync the report view with that URL so every sidebar entry works.
+  useEffect(() => {
+    setTab(requestedTab);
+    setType(params.get("type") === "payable" ? "payable" : "receivable");
+  }, [params, requestedTab]);
 
   const query =
     tab === "trial-balance" ? { asOf } : tab === "outstanding" ? { type, asOf } : { from, to };
@@ -43,18 +50,6 @@ function ReportsPageInner() {
   return (
     <div>
       <PageHeader title="Reports" subtitle="Accounting reports built from the double-entry ledger" />
-
-      <div className="mb-4 flex flex-wrap gap-1 rounded-lg border border-slate-200 dark:border-ink-700 bg-white dark:bg-ink-850 p-1 shadow-sm">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={clsx("rounded-md px-3 py-1.5 text-sm transition", tab === t.key ? "bg-brand-600 text-white" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100")}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
 
       <FilterBar>
         {tab === "trial-balance" || tab === "outstanding" ? (

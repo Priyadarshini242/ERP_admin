@@ -13,7 +13,7 @@ import { useTheme } from "@/components/ThemeProvider";
 import { Button, Checkbox, Field, Input } from "@/components/ui";
 import { setSession } from "@/lib/auth";
 
-const APP = process.env.NEXT_PUBLIC_APP_NAME ?? "QuickERP";
+const APP = process.env.NEXT_PUBLIC_APP_NAME ?? "ERP SYSTEM";
 const TAGLINE = process.env.NEXT_PUBLIC_APP_TAGLINE ?? "Retail & Wholesale";
 
 function LoginForm() {

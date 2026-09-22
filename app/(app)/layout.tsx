@@ -37,7 +37,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <Topbar onMenu={() => setMobileOpen(true)} />
         <main className="flex-1 p-4 sm:p-6">{children}</main>
         <footer className="flex items-center justify-between px-6 py-3 text-[11px] text-slate-400 dark:text-slate-500">
-          <span>© {new Date().getFullYear()} {process.env.NEXT_PUBLIC_APP_NAME ?? "QuickERP"}</span>
+          <span>© {new Date().getFullYear()} {process.env.NEXT_PUBLIC_APP_NAME ?? "ERP SYSTEM"}</span>
           <span>Modern ERP · Simple · Scalable · Efficient</span>
         </footer>
       </div>

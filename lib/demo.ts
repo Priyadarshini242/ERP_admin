@@ -91,6 +91,18 @@ export function demoFor(path: string): Record<string, unknown> | null {
       purchaseAmounts.map((_, i) => ({ ...doc(i, `BILL-0000${i + 1}`, "invoiceDate", "vendor", vendors, purchaseAmounts, ["POSTED", "POSTED", "DRAFT", "POSTED"]), billNo: `BILL-0000${i + 1}`, vendorInvoiceNo: `SD/24-25/${120 + i}` })),
       { summary: { taxableAmount: "742754.00", taxAmount: "133696.00", grandTotal: "876450.00", amountPaid: "610200.00", outstanding: "266250.00" } },
     );
+  if (p === "/sales/bills") {
+    // Kept in local storage only for the offline demo; production data comes from the API.
+    const saved = typeof window === "undefined" ? [] : (() => {
+      try { return JSON.parse(localStorage.getItem("quickerp_sales_bills") ?? "[]"); } catch { return []; }
+    })();
+    const seeded = salesAmounts.slice(0, 3).map((_, i) => ({
+      ...doc(i, `BILL-000${125 - i}`, "billDate", "customer", customers, salesAmounts, ["POSTED"]),
+      billNo: `BILL-000${125 - i}`,
+      sourceInvoice: { id: i + 1, invoiceNo: `INV-0000${i + 1}` },
+    }));
+    return page([...(Array.isArray(saved) ? saved : []), ...seeded]);
+  }
   if (p === "/sales/orders")
     return page(salesAmounts.slice(0, 6).map((_, i) => ({ ...doc(i, `SO-0000${i + 1}`, "orderDate", "customer", customers, salesAmounts, ["CONFIRMED", "DRAFT", "PARTIAL", "COMPLETED", "CANCELLED"]), orderNo: `SO-0000${i + 1}`, deliveryDate: iso(i - 7), reference: i % 2 ? `PO/${1000 + i}` : null, invoices: [] })));
   if (p === "/purchase/orders")
@@ -164,7 +176,7 @@ export function demoFor(path: string): Record<string, unknown> | null {
 
 /** Dashboard summary matching the reference design. */
 export const DEMO_DASHBOARD = {
-  company: "QuickERP",
+  company: "ERP SYSTEM",
   generatedAt: new Date().toISOString(),
   year: new Date().getFullYear(),
   cached: false,
@@ -189,7 +201,13 @@ export const DEMO_DASHBOARD = {
     { productId: 4, sku: "P004", name: "Toothpaste 100g", unit: "PCS", quantity: "12", reorderLevel: "30", status: "LOW" },
     { productId: 5, sku: "P005", name: "Tea Powder 250g", unit: "PCS", quantity: "0", reorderLevel: "20", status: "OUT" },
   ],
-  topProducts: [],
+  topProducts: [
+    { productId: 1, name: "Dove Soap 100g", sku: "P001", quantitySold: 1260, revenue: "56700.00" },
+    { productId: 2, name: "Ariel Detergent 1kg", sku: "P002", quantitySold: 840, revenue: "180600.00" },
+    { productId: 3, name: "Sunflower Oil 1L", sku: "P003", quantitySold: 735, revenue: "104370.00" },
+    { productId: 4, name: "Toothpaste 100g", sku: "P004", quantitySold: 620, revenue: "48360.00" },
+    { productId: 5, name: "Tea Powder 250g", sku: "P005", quantitySold: 510, revenue: "60180.00" },
+  ],
   recentInvoices: [
     { id: 1, invoiceNo: "INV-00148", invoiceDate: iso(0), customer: "ABC Traders", customerType: "B2B", status: "POSTED", paymentStatus: "PAID", grandTotal: "25430.00" },
     { id: 2, invoiceNo: "INV-00147", invoiceDate: iso(0), customer: "Walk-in Customer", customerType: "B2C", status: "POSTED", paymentStatus: "PAID", grandTotal: "3250.00" },

@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Building2, Moon, Plus, Sun, Users, Warehouse } from "lucide-react";
+import { Building2, Moon, Plus, Sun, Warehouse } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { DataTable } from "@/components/DataTable";
@@ -14,7 +14,7 @@ import { demoFor } from "@/lib/demo";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Row = Record<string, any>;
 
-const APP = process.env.NEXT_PUBLIC_APP_NAME ?? "QuickERP";
+const APP = process.env.NEXT_PUBLIC_APP_NAME ?? "ERP SYSTEM";
 const TAGLINE = process.env.NEXT_PUBLIC_APP_TAGLINE ?? "Retail & Wholesale";
 const COMPANY = process.env.NEXT_PUBLIC_COMPANY_NAME ?? "My Company";
 const STATE_CODE = process.env.NEXT_PUBLIC_COMPANY_STATE_CODE ?? "33";
@@ -23,7 +23,6 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [warehouses, setWarehouses] = useState<Row[]>([]);
-  const [users, setUsers] = useState<Row[] | null>(null);
   const [demo, setDemo] = useState(false);
   const [edit, setEdit] = useState<Row | null>(null);
 
@@ -40,11 +39,9 @@ export default function SettingsPage() {
   }
 
   useEffect(() => {
-    setUser(getUser());
+    const current = getUser();
+    setUser(current);
     void loadWarehouses();
-    api<Row[]>("/auth/users")
-      .then(setUsers)
-      .catch(() => setUsers(null));
   }, []);
 
   return (
@@ -114,31 +111,6 @@ export default function SettingsPage() {
             onRowClick={setEdit}
             empty="No warehouses"
           />
-        </Card>
-
-        <Card
-          title={
-            <span className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-slate-400" /> Users
-            </span>
-          }
-          padded={false}
-        >
-          {users ? (
-            <DataTable
-              bare
-              columns={[
-                { key: "fullName", header: "Name", render: (u) => <span className="font-medium text-slate-800 dark:text-slate-100">{u.fullName}</span> },
-                { key: "email", header: "Email" },
-                { key: "role", header: "Role", render: (u) => <Pill tone={u.role === "ADMIN" ? "violet" : u.role === "MANAGER" ? "info" : "neutral"}>{u.role}</Pill> },
-                { key: "isActive", header: "", render: (u) => (u.isActive ? <Pill tone="success">active</Pill> : <Pill>inactive</Pill>) },
-              ]}
-              rows={users}
-              empty="No users"
-            />
-          ) : (
-            <p className="p-4 text-sm text-slate-500 dark:text-slate-400">User management is available once the API is running with an admin account.</p>
-          )}
         </Card>
       </div>
 

@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/ui";
 
 function NewSalesInvoice() {
   const params = useSearchParams();
-  const type = params.get("type") === "B2B" ? "B2B" : params.get("type") === "B2C" ? "B2C" : undefined;
+  const fromUrl = params.get("type") === "B2B" ? "B2B" : params.get("type") === "B2C" ? "B2C" : "B2C";
   return (
     <div>
       <PageHeader backHref="/sales/register" backLabel="Back to list" title="New Sales Invoice" subtitle="Batch-tracked lines pick a batch or auto-allocate FEFO. After three-level approval, posting reduces stock and books Dr Customer / Cr Sales + GST Output" />
@@ -24,7 +24,7 @@ function NewSalesInvoice() {
         secondaryDate={{ label: "Due date", mustBeAfterPrimary: true }}
         showCustomerType
         showWarehouse
-        initial={type ? { customerType: type } : undefined}
+        customerTypePreset={fromUrl}
         toPayload={(s, flag) => ({
           customerId: s.partyId,
           customerType: s.customerType,

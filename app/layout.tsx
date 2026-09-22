@@ -5,7 +5,7 @@ import { THEME_INIT_SCRIPT, ThemeProvider } from "@/components/ThemeProvider";
 
 import "./globals.css";
 
-const APP = process.env.NEXT_PUBLIC_APP_NAME ?? "QuickERP";
+const APP = process.env.NEXT_PUBLIC_APP_NAME ?? "ERP SYSTEM";
 
 export const metadata: Metadata = {
   title: { default: APP, template: `%s · ${APP}` },

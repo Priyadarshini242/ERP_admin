@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import type { AccessCategory } from "./auth";
 import {
   ArrowLeftRight,
   Banknote,
@@ -57,6 +58,8 @@ export interface NavModule {
   key: string;
   /** short label under the rail icon */
   label: string;
+  /** destination used when the module is selected from the left rail */
+  homeHref: string;
   /** heading of the menu panel */
   title: string;
   subtitle: string;
@@ -64,10 +67,27 @@ export interface NavModule {
   items: NavItem[];
 }
 
+export interface MenuAccessEntry {
+  key: string;
+  moduleKey: string;
+  moduleLabel: string;
+  path: string[];
+  label: string;
+}
+
+/** Module visibility by operating category. ALL is used for administrators. */
+export const MODULE_ACCESS: Record<AccessCategory, string[]> = {
+  ALL: ["exec", "fin", "gst", "ims", "mfg"],
+  FMCG: ["exec", "gst", "ims"],
+  NON_FMCG: ["exec", "fin", "ims"],
+  INDUSTRY: ["exec", "fin", "ims", "mfg"],
+};
+
 export const MODULES: NavModule[] = [
   {
     key: "exec",
     label: "EXEC",
+    homeHref: "/dashboard?module=exec",
     title: "Executive",
     subtitle: "Company overview, approvals & setup",
     icon: LayoutDashboard,
@@ -81,30 +101,11 @@ export const MODULES: NavModule[] = [
         ],
       },
       {
-        label: "Approvals",
-        icon: ClipboardCheck,
-        children: [
-            { label: "Approval Documents", href: "/approvals?status=APPROVED", icon: ClipboardCheck },
-            { label: "Pending Documents", href: "/approvals?status=PENDING", icon: ClipboardList },
-            { label: "Rejection Documents", href: "/approvals?status=REJECTED", icon: FileMinus },
-        ],
-      },
-      {
-        label: "Reports",
-        icon: BarChart3,
-        children: [
-          { label: "Financial Reports", href: "/register/reports", icon: FileBarChart },
-          { label: "Sales Reporting", href: "/register/reports?tab=sales-summary", icon: PieChart },
-          { label: "Purchase Reporting", href: "/register/reports?tab=purchase-summary", icon: PieChart },
-          { label: "Stock Valuation", href: "/inventory/stock/management?view=product", icon: Warehouse },
-        ],
-      },
-      {
         label: "Company Setup",
         icon: Building2,
         children: [
           { label: "Company Profile", href: "/settings", icon: Building2 },
-          { label: "Users & Roles", href: "/exec/users", icon: Users, soon: true },
+          { label: "Users & Roles", href: "/exec/users", icon: Users },
           { label: "Document Numbering", href: "/exec/numbering", icon: ScrollText, soon: true },
         ],
       },
@@ -112,16 +113,19 @@ export const MODULES: NavModule[] = [
   },
   {
     key: "fin",
-    label: "FIN",
-    title: "Finance",
+    label: "ACC",
+    // Keep the module context while taking the user to the Finance dashboard.
+    // Linking the rail icon to Reports made a FIN click appear to do nothing
+    // whenever the user was already viewing a financial report.
+    homeHref: "/dashboard?module=fin",
+    title: "Accounts",
     subtitle: "Accounting, vouchers & financial reporting",
     icon: Landmark,
     items: [
       {
-        label: "Finance Dashboard",
+        label: "Accounts Dashboard",
         icon: BookOpen,
         children: [
-          { label: "My Dashboard", href: "/dashboard", icon: PieChart },
           { label: "Voucher Verification", href: "/approvals", icon: ClipboardCheck },
           { label: "Chart Of Accounts", href: "/register/ac-ledger", icon: Network },
           { label: "Chart of Cost Centers", href: "/finance/cost-centers", icon: Network, soon: true },
@@ -150,12 +154,15 @@ export const MODULES: NavModule[] = [
         ],
       },
       {
-        label: "Reports",
-        icon: BarChart3,
+        label: "Financial Reports",
+        icon: FileBarChart,
         children: [
-          { label: "Financial Reports", href: "/register/reports", icon: FileBarChart },
-          { label: "Bills Receivable", href: "/register/reports?tab=outstanding&type=receivable", icon: FileSpreadsheet },
-          { label: "Bills Payable", href: "/register/reports?tab=outstanding&type=payable", icon: FileSpreadsheet },
+          { label: "Trial Balance", href: "/register/reports?tab=trial-balance", icon: Calculator },
+          { label: "Day Book", href: "/register/reports?tab=day-book", icon: ScrollText },
+          { label: "Receivables / Payables", href: "/register/reports?tab=outstanding", icon: FileSpreadsheet },
+          { label: "Sales Summary", href: "/register/reports?tab=sales-summary", icon: PieChart },
+          { label: "Purchase Summary", href: "/register/reports?tab=purchase-summary", icon: PieChart },
+          { label: "GST Summary", href: "/register/reports?tab=gst-summary", icon: PercentCircle },
         ],
       },
       { label: "Cost Accounting", href: "/finance/cost-accounting", icon: Calculator, soon: true },
@@ -164,6 +171,7 @@ export const MODULES: NavModule[] = [
   {
     key: "gst",
     label: "GST",
+    homeHref: "/sales/register?module=gst",
     title: "GST / Tax",
     subtitle: "Tax registers, e-invoicing & returns",
     icon: PercentCircle,
@@ -173,6 +181,7 @@ export const MODULES: NavModule[] = [
         icon: Store,
         children: [
           { label: "Sales Invoice Register", href: "/sales/register", icon: Receipt },
+          { label: "Bill Register", href: "/sales/bills", icon: FileText },
           { label: "Credit Note Register", href: "/sales/credit-notes", icon: FileMinus },
           { label: "eInvoice Log Register", href: "/gst/einvoice-log", icon: FileText, soon: true },
           { label: "Proforma Invoices", href: "/gst/proforma-invoices", icon: FileText, soon: true },
@@ -200,6 +209,7 @@ export const MODULES: NavModule[] = [
   {
     key: "ims",
     label: "IMS",
+    homeHref: "/masters/products?module=ims",
     title: "Inventory Management",
     subtitle: "Masters, order processing & stock control",
     icon: Boxes,
@@ -257,6 +267,7 @@ export const MODULES: NavModule[] = [
   {
     key: "mfg",
     label: "MFG",
+    homeHref: "/manufacturing?module=mfg",
     title: "Manufacturing",
     subtitle: "BOMs, work orders, QC & batch traceability",
     icon: Factory,
@@ -300,6 +311,54 @@ export const MODULES: NavModule[] = [
 ];
 
 export const NAV_FOOTER: NavItem[] = [{ label: "Settings", href: "/settings", icon: Settings }];
+
+/** Every clickable sidebar item with a stable key for menu-access preferences. */
+export function menuAccessEntries(): MenuAccessEntry[] {
+  const entries: MenuAccessEntry[] = [];
+  for (const module of MODULES) {
+    const walk = (items: NavItem[], trail: string[]) => {
+      for (const item of items) {
+        const path = [...trail, item.label];
+        if (item.href) entries.push({ key: `${module.key}/${path.join("/")}`, moduleKey: module.key, moduleLabel: module.title, path: trail, label: item.label });
+        if (item.children) walk(item.children, path);
+      }
+    };
+    walk(module.items, []);
+  }
+  return entries;
+}
+
+const FMCG_DEFAULT_MENU_KEYS = new Set([
+  "fin/Financial Reports/Trial Balance",
+  "exec/Executive Dashboard/My Dashboard",
+  "exec/Company Setup/Company Profile",
+  "exec/Company Setup/Users & Roles",
+  "gst/Sales/Sales Invoice Register",
+  "gst/Sales/Credit Note Register",
+  "gst/Purchase/Purchase Invoice Register",
+  "gst/Purchase/Debit Note Register",
+  "gst/Reports/GST Returns",
+  "ims/Master Data/Client Leads",
+  "ims/Master Data/Suppliers",
+  "ims/Master Data/Stock Inventory",
+  "ims/Sales Processing/Sales Orders",
+  "ims/Procurement Processing/Purchase Orders",
+  "ims/Stock/Stock Management",
+  "ims/Stock/Batch & Expiry",
+  "ims/Stock/Stock Adjustments",
+  "ims/Returns/Sales Returns",
+  "ims/Returns/Purchase Returns",
+  "ims/Returns/Returns Report",
+  "ims/Approvals",
+]);
+
+/** Starting menu selection for an access category; users can customize it afterwards. */
+export function defaultMenuKeysForCategory(category: AccessCategory): string[] {
+  if (category === "FMCG") return [...FMCG_DEFAULT_MENU_KEYS];
+  return menuAccessEntries()
+    .filter((entry) => MODULE_ACCESS[category].includes(entry.moduleKey))
+    .map((entry) => entry.key);
+}
 
 /** Entry (form) pages are opened from buttons, not the menu — listed here only for the Ctrl+K search. */
 export const ENTRY_PAGES: { label: string; href: string; path: string }[] = [

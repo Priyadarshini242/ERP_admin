@@ -4,12 +4,23 @@ import { DocumentForm, linesToApi } from "@/components/DocumentForm";
 import { PageHeader } from "@/components/ui";
 import type { Issue } from "@/lib/api";
 import { n } from "@/lib/format";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 export default function NewPurchaseOrderPage() {
+  return <Suspense><NewPurchaseOrderForm /></Suspense>;
+}
+
+function NewPurchaseOrderForm() {
+  const params = useSearchParams();
+  const quantity = Math.max(1, Math.min(10000, Number(params.get("quantity")) || 50));
+  const productIds = [...new Set((params.get("products") ?? "").split(",").map(Number).filter((id) => Number.isInteger(id) && id > 0))].slice(0, 20);
+  const suggested = params.get("source") === "dashboard" && productIds.length > 0;
+
   return (
     <div>
       <PageHeader backHref="/purchase/orders" backLabel="Back to list" title="Create Purchase Order"
-        subtitle="Validated live: vendor, dates, duplicate lines, price vs. last purchase price, reorder level, open POs for the same item"
+        subtitle={suggested ? `Dashboard replenishment suggestion: ${productIds.length} fast-moving, low-stock product${productIds.length === 1 ? "" : "s"} at ${quantity} units each.` : "Validated live: vendor, dates, duplicate lines, price vs. last purchase price, reorder level, open POs for the same item"}
       />
       <DocumentForm
         title="PO details"
@@ -22,6 +33,10 @@ export default function NewPurchaseOrderPage() {
         secondaryDate={{ label: "Expected delivery", mustBeAfterPrimary: true }}
         showWarehouse
         referenceLabel="Quotation / reference"
+        initial={suggested ? {
+          notes: "Replenishment suggested from the Executive Dashboard.",
+          items: productIds.map((productId) => ({ productId, quantity: String(quantity), unitPrice: "", discountPct: "0", taxRate: "", description: "", batchId: null, batchNo: "", mfgDate: "", expiryDate: "", mrp: "" })),
+        } : undefined}
         validateExtra={(s, { products }) => {
           const issues: Issue[] = [];
           for (const [i, l] of s.items.entries()) {

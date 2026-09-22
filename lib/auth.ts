@@ -10,6 +10,10 @@ export const AUTH_ENABLED = process.env.NEXT_PUBLIC_AUTH_ENABLED === "true";
 
 export const TOKEN_KEY = "erp_token";
 export const USER_KEY = "erp_user";
+export const MENU_ACCESS_KEY = "erp_menu_access";
+
+export const ACCESS_CATEGORIES = ["ALL", "FMCG", "NON_FMCG", "INDUSTRY"] as const;
+export type AccessCategory = (typeof ACCESS_CATEGORIES)[number];
 
 export interface AuthUser {
   id: number;
@@ -17,6 +21,7 @@ export interface AuthUser {
   fullName: string;
   role: "ADMIN" | "MANAGER" | "USER";
   isActive: boolean;
+  accessCategory?: AccessCategory;
 }
 
 export function getToken(): string | null {
@@ -47,6 +52,38 @@ export function getUser(): AuthUser | null {
   } catch {
     return null;
   }
+}
+
+export function updateUserAccessCategory(accessCategory: AccessCategory) {
+  const user = getUser() ?? { id: 0, email: "admin@erp.local", fullName: "Administrator", role: "ADMIN" as const, isActive: true };
+  const updated = { ...user, accessCategory };
+  try {
+    window.localStorage.setItem(USER_KEY, JSON.stringify(updated));
+  } catch {
+    /* ignore */
+  }
+  window.dispatchEvent(new CustomEvent("user:changed"));
+  return updated;
+}
+
+/** A missing preference means every menu item is available. */
+export function getVisibleMenuKeys(): string[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(MENU_ACCESS_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setVisibleMenuKeys(keys: string[]) {
+  try {
+    window.localStorage.setItem(MENU_ACCESS_KEY, JSON.stringify(keys));
+  } catch {
+    /* ignore */
+  }
+  window.dispatchEvent(new CustomEvent("menu-access:changed"));
 }
 
 export function clearToken() {

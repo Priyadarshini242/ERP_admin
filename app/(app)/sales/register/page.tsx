@@ -9,15 +9,27 @@ export default function SalesRegisterPage() {
       subtitle="Tax invoices — filter B2B / B2C, post to update stock and ledger, record receipts"
       docType="INV"
       endpoint="/sales/invoices"
-      newHref="/sales/register/new"
-      newLabel="New invoice"
+      newActions={[
+        { label: "B2B Invoice", href: "/sales/register/new?type=B2B" },
+        { label: "B2C Invoice", href: "/sales/register/new?type=B2C" },
+      ]}
       numberField="invoiceNo"
       dateField="invoiceDate"
       partyField="customer"
       statusOptions={["DRAFT", "POSTED", "CANCELLED"]}
       showCustomerType
       showPayment
-      actions={[ACTIONS.post, ACTIONS.cancel]}
+      actions={[
+        ACTIONS.post,
+        {
+          label: "Create bill",
+          verb: "create-bill",
+          variant: "primary",
+          href: (invoice) => `/sales/bills/new?invoiceId=${invoice.id}`,
+          when: (invoice) => invoice.status === "POSTED",
+        },
+        ACTIONS.cancel,
+      ]}
     />
   );
 }

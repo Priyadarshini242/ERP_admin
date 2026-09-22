@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Search } from "lucide-react";
+import { ChevronDown, FileText, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -22,6 +22,8 @@ export interface DocAction {
   label: string;
   /** appended to `${endpoint}/${id}/` */
   verb: string;
+  /** Navigate to a document workflow instead of calling an API action. */
+  href?: (doc: Doc) => string;
   variant?: "primary" | "secondary" | "danger";
   when: (doc: Doc) => boolean;
   confirm?: string;
@@ -33,6 +35,8 @@ export interface DocumentListProps {
   endpoint: string;
   newHref?: string;
   newLabel?: string;
+  /** Optional split-button entries for document types such as B2B and B2C invoices. */
+  newActions?: { label: string; href: string }[];
   numberField: string;
   dateField: string;
   partyField: "customer" | "vendor";
@@ -46,6 +50,8 @@ export interface DocumentListProps {
   typeParam?: string;
   /** enables the three-level approval column, filter and panel */
   docType?: ApprovalDocType;
+  /** Use supplied demo data when this resource's API is unavailable or returning a 5xx. */
+  fallbackOnServerError?: boolean;
 }
 
 const APPROVAL_OPTIONS = ["NONE", "PENDING_L1", "PENDING_L2", "PENDING_L3", "APPROVED", "REJECTED"];
@@ -78,6 +84,7 @@ function DocumentListInner(p: DocumentListProps) {
   const [error, setError] = useState<ApiError | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [payOpen, setPayOpen] = useState(false);
+  const [newOpen, setNewOpen] = useState(false);
 
   const { data, items, loading, error: loadError, reload, demo } = useList<Doc>(p.endpoint, {
     q,
@@ -88,7 +95,7 @@ function DocumentListInner(p: DocumentListProps) {
     to,
     page,
     pageSize: 20,
-  });
+  }, [], p.fallbackOnServerError);
 
   // ?open=<id> deep link (from entry forms and the approvals queue)
   const openId = params.get("open");
@@ -114,6 +121,11 @@ function DocumentListInner(p: DocumentListProps) {
   }
 
   async function runAction(doc: Doc, a: DocAction) {
+    if (a.href) {
+      setSelected(null);
+      router.push(a.href(doc));
+      return;
+    }
     if (a.confirm && !window.confirm(a.confirm)) return;
     setBusy(a.verb);
     setError(null);
@@ -163,7 +175,22 @@ function DocumentListInner(p: DocumentListProps) {
             </p>
           )}
         </div>
-        {p.newHref && (
+        {p.newActions?.length ? (
+          <div className="relative">
+            <Button onClick={() => setNewOpen((open) => !open)} aria-expanded={newOpen} aria-haspopup="menu">
+              <Plus className="h-4 w-4" /> Add New <ChevronDown className={`h-4 w-4 transition-transform ${newOpen ? "rotate-180" : ""}`} />
+            </Button>
+            {newOpen && (
+              <div role="menu" className="absolute right-0 top-full z-20 mt-2 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg dark:border-ink-700 dark:bg-ink-900">
+                {p.newActions.map((action) => (
+                  <Link key={action.href} href={action.href} role="menuitem" onClick={() => setNewOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-brand-50 hover:text-brand-700 dark:text-slate-200 dark:hover:bg-brand-500/10 dark:hover:text-brand-300">
+                    <FileText className="h-5 w-5 text-brand-600 dark:text-brand-300" /> {action.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : p.newHref && (
           <Link href={p.newHref}>
             <Button>
               <Plus className="h-4 w-4" /> {p.newLabel ?? "New"}
@@ -171,6 +198,10 @@ function DocumentListInner(p: DocumentListProps) {
           </Link>
         )}
       </div>
+
+      {params.get("created") === "1" && (
+        <Alert kind="success" title="Bill created successfully." />
+      )}
 
       <FilterBar>
         <Field label="Search" className="min-w-[200px] flex-1">

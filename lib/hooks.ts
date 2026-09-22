@@ -11,7 +11,7 @@ const isOffline = (e: unknown) => !(e instanceof ApiError);
 type Query = Record<string, string | number | boolean | null | undefined>;
 
 /** Generic paginated list fetcher. Re-fetches whenever `query` changes (shallow compare via JSON). */
-export function useList<T>(path: string | null, query: Query = {}, deps: unknown[] = []) {
+export function useList<T>(path: string | null, query: Query = {}, deps: unknown[] = [], fallbackOnServerError = false) {
   const [data, setData] = useState<(Page<T> & Record<string, unknown>) | null>(null);
   const [loading, setLoading] = useState(Boolean(path));
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +36,8 @@ export function useList<T>(path: string | null, query: Query = {}, deps: unknown
       }
     } catch (e) {
       if (v !== version.current) return;
-      const fallback = isOffline(e) ? (demoFor(path) as (Page<T> & Record<string, unknown>) | null) : null;
+      const canFallback = isOffline(e) || (fallbackOnServerError && e instanceof ApiError && e.status >= 500);
+      const fallback = canFallback ? (demoFor(path) as (Page<T> & Record<string, unknown>) | null) : null;
       if (fallback) {
         setData(fallback);
         setDemo(true);
@@ -45,7 +46,7 @@ export function useList<T>(path: string | null, query: Query = {}, deps: unknown
       if (v === version.current) setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [path, key, ...deps]);
+  }, [path, key, fallbackOnServerError, ...deps]);
 
   useEffect(() => {
     void reload();
