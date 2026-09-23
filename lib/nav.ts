@@ -227,6 +227,7 @@ export const MODULES: NavModule[] = [
         label: "Sales Processing",
         icon: ShoppingBag,
         children: [
+          { label: "POS Terminal", href: "/ims/pos-terminal", icon: ShoppingBag },
           { label: "Material Requests", href: "/ims/material-requests", icon: ClipboardList, soon: true },
           { label: "Quotations To Clients", href: "/ims/quotations", icon: FileText, soon: true },
           { label: "Sales Orders", href: "/sales/orders", icon: ClipboardList },
@@ -341,6 +342,7 @@ const FMCG_DEFAULT_MENU_KEYS = new Set([
   "ims/Master Data/Client Leads",
   "ims/Master Data/Suppliers",
   "ims/Master Data/Stock Inventory",
+  "ims/Sales Processing/POS Terminal",
   "ims/Sales Processing/Sales Orders",
   "ims/Procurement Processing/Purchase Orders",
   "ims/Stock/Stock Management",
@@ -362,6 +364,7 @@ export function defaultMenuKeysForCategory(category: AccessCategory): string[] {
 
 /** Entry (form) pages are opened from buttons, not the menu — listed here only for the Ctrl+K search. */
 export const ENTRY_PAGES: { label: string; href: string; path: string }[] = [
+  { label: "POS Terminal", href: "/ims/pos-terminal", path: "IMS › Sales Processing" },
   { label: "Create Sales Order", href: "/sales/orders/new", path: "IMS › Sales Processing" },
   { label: "New Sales Invoice", href: "/sales/register/new", path: "GST › Sales" },
   { label: "New Credit Note", href: "/sales/credit-notes/new", path: "GST › Sales" },

@@ -1,3 +1,7 @@
 {
-  "/(app)/sales/register/page": "app/(app)/sales/register/page.js"
+  "/(app)/sales/orders/page": "app/(app)/sales/orders/page.js",
+  "/(app)/inventory/stock/management/page": "app/(app)/inventory/stock/management/page.js",
+  "/(app)/ims/pos-terminal/page": "app/(app)/ims/pos-terminal/page.js",
+  "/(app)/[...slug]/page": "app/(app)/[...slug]/page.js",
+  "/(app)/masters/products/page": "app/(app)/masters/products/page.js"
 }
